@@ -27,35 +27,36 @@ class BatchNorm(nn.Module):
             self.register_buffer('exp_mean', torch.zeros(channels))
             self.register_buffer('exp_var', torch.ones(channels))
 
-def forward(self, x: torch.Tensor):
-    x_shape = x.shape
-    batch_size = x_shape[0]
-    assert self.channels == x.shape[1]
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x_shape = x.shape
+        batch_size = x_shape[0]
+        assert self.channels == x.shape[1]
 
-    x = x.view(batch_size, self.channels, -1)
+        x = x.view(batch_size, self.channels, -1)
 
-    if self.training or not self.track_running_stats:
-        mean = x.mean(dim=[0, 2], keepdim=True)
-        # Compute the variance using the formula Var[x] = E[x^2] - (E[x])^2
-        mean_x2 = (x ** 2).mean(dim=[0, 2], keepdim=True)
-        var = mean_x2 - mean ** 2
+        if self.training or not self.track_running_stats:
+            mean = x.mean(dim=[0, 2], keepdim=True)
+            # Compute the variance using the formula Var[x] = E[x^2] - (E[x])^2
+            mean_x2 = (x ** 2).mean(dim=[0, 2], keepdim=True)
+            var = mean_x2 - mean ** 2
 
-        if self.training and self.track_running_stats:
-            # Update the exponential moving averages of mean and variance
-            self.exp_mean = (1 - self.momentum) * self.exp_mean + self.momentum * mean.squeeze()
-            self.exp_var = (1 - self.momentum) * self.exp_var + self.momentum * var.squeeze()
-        else:
-            mean = self.exp_mean
-            var = self.exp_var
+            if self.training and self.track_running_stats:
+                # Update the exponential moving averages of mean and variance
+                self.exp_mean = (1 - self.momentum) * self.exp_mean + self.momentum * mean.squeeze()
+                self.exp_var = (1 - self.momentum) * self.exp_var + self.momentum * var.squeeze()
+            else:
+                mean = self.exp_mean
+                var = self.exp_var
 
-    # Normalize the input using the mean and variance
-    x_norm = (x - mean.view(1, -1, 1)) / torch.sqrt(var.view(1, -1, 1) + self.eps)
-    # Scale and shift the normalized input if affine is True
-    if self.affine:
-        x_norm = self.scale.view(1, -1, 1) * x_norm + self.shift.view(1, -1, 1)
-    # Reshape the output back to the original shape
-    return x_norm.view(x_shape)
-# simple test
+        # Normalize the input using the mean and variance
+        x_norm = (x - mean.view(1, -1, 1)) / torch.sqrt(var.view(1, -1, 1) + self.eps)
+        # Scale and shift the normalized input if affine is True
+        if self.affine:
+            x_norm = self.scale.view(1, -1, 1) * x_norm + self.shift.view(1, -1, 1)
+        # Reshape the output back to the original shape
+        return x_norm.view(x_shape)
+
+
 def _test():
     # Create a BatchNorm layer with 3 channels
     bn = BatchNorm(3)
@@ -65,6 +66,7 @@ def _test():
     output = bn(x)
     print("Input shape:", x.shape)
     print("Output shape:", output.shape)
+
 
 if __name__ == "__main__":
     _test()
