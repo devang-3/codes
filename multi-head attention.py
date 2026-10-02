@@ -1,10 +1,7 @@
 import math
-from typing import Optional, List
-
 import torch
-from torch import nn
-
-from labml import tracker
+import torch.nn as nn
+from torch import Tensor
 
 class PrepareForMultiHeadAttention(nn.Module):
 
@@ -29,6 +26,20 @@ class PrepareForMultiHeadAttention(nn.Module):
         return x
 
 class MultiHeadAttention(nn.Module):
+    """Compute multi-head scaled dot-product attention over a sequence.
+
+    This module projects the input query, key, and value tensors into multiple
+    attention heads, computes pairwise attention scores within each head, and then
+    combines the attended values back into the model dimension. It is intended for
+    sequence-to-sequence or self-attention use cases.
+
+    Args:
+        heads: Number of attention heads to split the representation into.
+        d_model: Size of the input embedding dimension for each token.
+        dropout_prob: Dropout probability applied after the softmax attention weights.
+        bias: Whether to include bias terms in the linear projections and output layer.
+    """
+
     def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1, bias: bool = True):
         super().__init__()
         self.d_k = d_model // heads
